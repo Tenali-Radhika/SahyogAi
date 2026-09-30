@@ -19,7 +19,11 @@ export const metadata: Metadata = {
     "Federated AI platform for national-scale health resource and supply chain management across India's Primary Health Centre network.",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html
       lang="en"

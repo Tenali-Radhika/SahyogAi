@@ -94,8 +94,107 @@ export function VoiceReporter({ phcs }: { phcs: PHC[] }) {
     }
   }
 
+  async function submitPreset(transcriptText: string, langCode: FieldLanguageCode) {
+    setIsSubmitting(true);
+    setError(null);
+    setLanguage(langCode);
+    try {
+      const res = await fetch("/api/field-report", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ textTranscript: transcriptText, languageCode: langCode, phcId }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error ?? "Something went wrong processing the report.");
+        return;
+      }
+      setResult(data);
+    } catch {
+      setError("Could not reach the server. Check your connection and try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
   return (
     <div className="space-y-4">
+      {/* Quick Demo Scenarios for Hackathon Reviewers */}
+      <div
+        className="rounded-xl border p-4"
+        style={{ borderColor: "var(--border-hairline)", background: "var(--surface-card)" }}
+      >
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--brand-primary)" }}>
+            ⚡ 1-Click Multilingual Test Scenarios
+          </span>
+          <span className="text-xs" style={{ color: "var(--text-muted)" }}>
+            Instant evaluation without mic access
+          </span>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+          <button
+            type="button"
+            onClick={() =>
+              submitPreset(
+                "हमें आज जिला डिपो से 250 ओआरएस पैकेट मिले हैं और 2 नर्स छुट्टी पर हैं।",
+                "hi-IN"
+              )
+            }
+            className="text-left p-2.5 rounded-lg border hover:border-blue-400 hover:bg-blue-50/50 transition-colors"
+            style={{ borderColor: "var(--border-hairline)" }}
+          >
+            <span className="font-semibold block text-slate-800">हिन्दी (Hindi) — Stock Intake</span>
+            <span className="text-slate-500 line-clamp-1">&quot;हमें आज 250 ओआरएस पैकेट मिले...&quot;</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() =>
+              submitPreset(
+                "आज प्राथमिक आरोग्य केंद्रात 400 पॅरासिटामॉल गोळ्या आल्या आहेत आणि ओपीडीमध्ये 65 रुग्ण आले.",
+                "mr-IN"
+              )
+            }
+            className="text-left p-2.5 rounded-lg border hover:border-blue-400 hover:bg-blue-50/50 transition-colors"
+            style={{ borderColor: "var(--border-hairline)" }}
+          >
+            <span className="font-semibold block text-slate-800">मराठी (Marathi) — Medicine & OPD</span>
+            <span className="text-slate-500 line-clamp-1">&quot;400 पॅरासिटामॉल गोळ्या आल्या...&quot;</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() =>
+              submitPreset(
+                "இன்று 150 அமோக்ஸிசிலின் மாத்திரைகள் பெறப்பட்டன, 1 மருத்துவர் விடுப்பில் உள்ளார்.",
+                "ta-IN"
+              )
+            }
+            className="text-left p-2.5 rounded-lg border hover:border-blue-400 hover:bg-blue-50/50 transition-colors"
+            style={{ borderColor: "var(--border-hairline)" }}
+          >
+            <span className="font-semibold block text-slate-800">தமிழ் (Tamil) — Antibiotic Inflow</span>
+            <span className="text-slate-500 line-clamp-1">&quot;150 அமோக்ஸிசிலின் மாத்திரைகள்...&quot;</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() =>
+              submitPreset(
+                "Received 300 Doxycycline capsules this morning; staff attendance is 5 out of 6.",
+                "en-IN"
+              )
+            }
+            className="text-left p-2.5 rounded-lg border hover:border-blue-400 hover:bg-blue-50/50 transition-colors"
+            style={{ borderColor: "var(--border-hairline)" }}
+          >
+            <span className="font-semibold block text-slate-800">English (India) — Outbreak Prep</span>
+            <span className="text-slate-500 line-clamp-1">&quot;Received 300 Doxycycline capsules...&quot;</span>
+          </button>
+        </div>
+      </div>
+
       <div className="grid gap-3 sm:grid-cols-2">
         <label className="text-sm">
           <span className="mb-1 block font-medium" style={{ color: "var(--text-primary)" }}>
@@ -138,14 +237,14 @@ export function VoiceReporter({ phcs }: { phcs: PHC[] }) {
         style={{ borderColor: "var(--border-hairline)", background: "var(--surface-card)" }}
       >
         <p className="mb-4 text-sm" style={{ color: "var(--text-secondary)" }}>
-          Record a short report, e.g. &quot;We received 200 ORS sachets today and have 3 staff on leave.&quot;
+          Or record a live voice note in your browser (MediaRecorder Opus + Cloud Speech-to-Text):
         </p>
         <button
           onClick={isRecording ? stopRecording : startRecording}
-          className="rounded-full px-6 py-3 text-sm font-semibold text-white"
+          className="rounded-full px-6 py-3 text-sm font-semibold text-white shadow-sm transition-transform active:scale-95"
           style={{ background: isRecording ? "var(--status-critical)" : "var(--brand-primary)" }}
         >
-          {isRecording ? "Stop recording" : "Start recording"}
+          {isRecording ? "🔴 Stop recording" : "🎙️ Start recording"}
         </button>
 
         {audioUrl && !isRecording && (
@@ -158,7 +257,7 @@ export function VoiceReporter({ phcs }: { phcs: PHC[] }) {
                 className="rounded-md px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
                 style={{ background: "var(--status-good)" }}
               >
-                {isSubmitting ? "Submitting…" : "Submit report"}
+                {isSubmitting ? "Submitting…" : "Submit voice report"}
               </button>
             </div>
           </div>
